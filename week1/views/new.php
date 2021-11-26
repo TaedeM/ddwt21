@@ -34,6 +34,42 @@
                     <h5><?= $page_subtitle ?></h5>
                     <p><?= $page_content ?></p>
                     <!-- Put your form here -->
+                    <form action="<?= $form_action ?>" method="POST">
+                        <div class="form-group row">
+                            <label for "inputName" class="col-sm-2 col-form-label">Name</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="inputName" name="Name" value="<?php if (isset($single_serie)){echo $single_serie['name'];} ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for "inputCreator" class="col-sm-2 col-form-label">Creator</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="inputCreator" name="Creator" value="<?php if (isset($single_serie)){echo $single_serie['creator'];} ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for "inputSeasons" class="col-sm-2 col-form-label">Seasons</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="inputSeasons" name="Seasons" value="<?php if (isset($single_serie)){echo $single_serie['seasons'];} ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for "inputAbstract" class="col-sm-2 col-form-label">Abstract</label>
+                            <div class="col-sm-10">
+                                <input type="textarea" class="form-control" id="inputAbstract" name="Abstract" value="<?php if (isset($single_serie)){echo $single_serie['abstract'];} ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-10">
+                                <input type="hidden" class="form-control" id="inputId" name="inputId" value="<?php if (isset($series_id)){echo $series_id;} ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-10">
+                                <button type="submit" class="btn btn-primary"><?= $submit_btn ?></button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Right column -->

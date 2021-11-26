@@ -28,6 +28,244 @@ function new_route($route_uri, $request_type){
         return False;
     }
 }
+/**
+ * Add a serie to the database
+ */
+function add_series($db, $input_name, $input_creator, $input_seasons, $input_abstract) {
+    
+    /* Check data type */
+    if (!is_numeric($input_seasons)) {
+        return [
+            'type' => 'danger',
+            'message' => 'There was an error. You should enter a number in the field Seasons.'
+        ];
+    }
+    /* check if all fields are set*/
+    if (
+        empty($input_name) or
+        empty($input_creator) or
+        empty($input_seasons) or
+        empty($input_abstract)
+    ) {
+        return [
+            'type' => 'danger',
+            'message' => 'There was an error. Not all fields were filled in.'
+        ];
+    }
+
+    /* Check if book already exists */
+    $stmt = $db->prepare('SELECT * FROM series WHERE name = ?');
+    $stmt->execute([$input_name]);
+    $book = $stmt->rowCount();
+    if ($book){
+        return [
+            'type' => 'danger',
+            'message' => 'This book was already added.'
+        ];
+    }
+    /* Add book */
+    $stmt = $db->prepare("INSERT INTO series (name, creator, seasons, abstract) VALUES (?, ?, ?, ?)");
+    $stmt->execute([
+        $input_name,
+        $input_creator,
+        $input_seasons,
+        $input_abstract
+    ]);
+    $inserted = $stmt->rowCount();
+    if ($inserted == 1) {
+        return [
+            'type' => 'success',
+            'message' => sprintf("Book '%s' added to Books Overview.", $input_name)
+        ];
+    }
+    else {
+        return [
+            'type' => 'danger',
+            'message' => 'There was an error. The book was not added. Try it again.'
+        ];
+    }
+}
+
+/**
+ * connect to the database
+ */
+function connect_db($host, $db, $user, $pass)
+{
+    $charset = 'utf8mb4';
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ];
+    try {
+        $pdo = new PDO($dsn, $user, $pass, $options);
+    } catch (PDOException $e) {
+        echo sprintf("Failed to connect. %s", $e->getMessage());
+    }
+    return $pdo;
+}
+
+/**
+ * Count the amount of items in the database
+ */
+function count_series($db)
+{
+    $test = $db->prepare("SELECT id FROM series");
+    $test->execute();
+    $rowcount = $test->rowCount();
+    return $rowcount;
+}
+
+/**
+ * return all series in the database
+ */
+function get_series($db)
+{
+    $stmt = $db->prepare('SELECT * FROM series');
+    $stmt->execute();
+    $books = $stmt->fetchAll();
+    $books_exp = Array();
+    /* Create array with htmlspecialchars */
+    foreach ($books as $key => $value){
+        foreach ($value as $user_key => $user_input) {
+            $books_exp[$key][$user_key] = htmlspecialchars($user_input);
+        }
+    }
+    return $books_exp;
+}
+
+/**
+ * transform the serie object into a html table
+ */
+function get_series_table($series){
+    $table_exp = '
+    <table class="table table-hover">
+    <thead
+    <tr>
+    <th scope="col">Books</th>
+    <th scope="col"></th>
+    </tr>
+    </thead>
+    <tbody';
+    foreach($series as $key => $value){
+        $table_exp .= '
+        <tr>
+        <th scope="row">'.$value['name'].'</th>
+        <td><a href="/DDWT21/week1/series/?serie_id='.$value['id'].'" role="button" class="btn btn-primary">More info</a></td>
+        </tr>
+        ';
+    }
+    $table_exp .= '
+    </tbody>
+    </table>
+    ';
+    return $table_exp;
+}
+
+/**
+ * Get all info on a single serie
+ */
+function get_series_info($db, $id){
+    $serie = $db->prepare('SELECT * FROM series WHERE id = ?');
+    $serie->execute([$id]);
+    $serie_info = $serie->fetch();
+    $serie_info_exp = Array();
+
+    foreach ($serie_info as $key => $value){
+        $serie_info_exp[$key] = htmlspecialchars($value);
+    }
+    return $serie_info_exp;
+}
+
+/**
+ * Update a serie in the database
+ */
+function update_series($db, $serie_info) {    
+    //echo $serie_id;
+    if (
+        empty($serie_info['Name']) or
+        empty($serie_info['Creator']) or
+        empty($serie_info['Seasons']) or
+        empty($serie_info['Abstract']) or
+        empty($serie_info['inputId'])
+    ) {
+        return [
+            'type' => 'danger',
+            'message' => 'There was an error. Not all fields were filled in.'
+        ];
+    }
+    /* Check data type */
+    if (!is_numeric($serie_info['Seasons'])) {
+        return [
+            'type' => 'danger',
+            'message' => 'There was an error. You should enter a number in the field Editions.'
+        ];
+    }
+    /* Get current serie name */
+    $stmt = $db->prepare('SELECT * FROM series WHERE id = ?');
+    $stmt->execute([$serie_info['inputId']]);
+    $serie = $stmt->fetch();
+    $current_name = $serie['name'];
+
+    /* Check if serie already exists */
+    $stmt = $db->prepare('SELECT * FROM series WHERE name = ?');
+    $stmt->execute([$serie_info['Name']]);
+    $serie = $stmt->fetch();
+    if ($serie_info['Name'] == $serie['name'] and $serie['name'] != $current_name) {
+        return [
+            'type' => 'danger',
+            'message' => sprintf("The name of the book cannot be changed. %s already exists.", $book_info['Name'])
+        ];
+    }
+    /* Update database*/
+    $stmt = $db->prepare("UPDATE series SET name = ?, creator = ?, seasons = ?, abstract = ? WHERE id = ?");
+    $stmt->execute([
+        $serie_info['Name'],
+        $serie_info['Creator'],
+        $serie_info['Seasons'],
+        $serie_info['Abstract'],
+        $serie_info['inputId']
+    ]);
+
+    $updated = $stmt->rowCount();
+    if ($updated == 1) {
+        return [
+            'type' => 'success',
+            'message' => sprintf("Book '%s' was edited!", $serie_info['Name'])
+        ];
+    }
+    else {
+        return [
+            'type' => 'warning',
+            'message' => 'The book was not edited. No changes were detected'
+        ];
+    }
+}
+
+/**
+ * remove a series from the database
+ */
+function remove_series($db, $id) {
+    /* Get book info */
+    $series_info = get_series_info($db, $id);
+
+    /* Delete book */
+    $stmt = $db->prepare("DELETE FROM series WHERE id = ?");
+    $stmt->execute([$id]);
+    $deleted = $stmt->rowCount();
+    if ($deleted == 1) {
+        return [
+            'type' => 'success',
+            'message' => sprintf("Book '%s' was removed!", $serie_info['name'])
+        ];
+    }
+    else {
+        return [
+            'type' => 'warning',
+            'message' => 'An error occurred. The book was not removed.'
+        ];
+    }
+}
 
 /**
  * Creates a new navigation array item using URL and active status

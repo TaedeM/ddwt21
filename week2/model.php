@@ -100,7 +100,14 @@ function get_breadcrumbs($breadcrumbs) {
  * @param array $navigation Array with as Key the page name and as Value the corresponding URL
  * @return string HTML code that represents the navigation
  */
-function get_navigation($navigation){
+function get_navigation($navigation, $active_id){
+    foreach($navigation as $id => $info) {
+        var_dump($id);
+        var_dump($info);
+    }
+//    var_dump($navigation['1']['name']);
+//    var_dump($navigation['1']['url']);
+    
     $navigation_exp = '
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand">Series Overview</a>
@@ -109,13 +116,13 @@ function get_navigation($navigation){
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">';
-    foreach ($navigation as $name => $info) {
-        if ($info[1]){
+    foreach ($navigation as $id => $info) {
+        if ($id == $active_id){
             $navigation_exp .= '<li class="nav-item active">';
-            $navigation_exp .= '<a class="nav-link" href="'.$info[0].'">'.$name.'</a>';
+            $navigation_exp .= '<a class="nav-link" href="'.$navigation[$id]['url'].'">'.$navigation[$id]['name'].'</a>';
         }else{
             $navigation_exp .= '<li class="nav-item">';
-            $navigation_exp .= '<a class="nav-link" href="'.$info[0].'">'.$name.'</a>';
+            $navigation_exp .= '<a class="nav-link" href="'.$navigation[$id]['url'].'">'.$navigation[$id]['name'].'</a>';
         }
 
         $navigation_exp .= '</li>';
@@ -132,7 +139,10 @@ function get_navigation($navigation){
  * @param array $series Associative array of series
  * @return string
  */
-function get_series_table($series){
+function get_series_table($pdo, $series){
+    $usr = get_user_name($pdo, $series[0]['user']);
+    $username = $usr['firstname']." ".$usr['lastname'];
+    var_dump($username);
     $table_exp = '
     <table class="table table-hover">
     <thead
@@ -146,6 +156,7 @@ function get_series_table($series){
         $table_exp .= '
         <tr>
             <th scope="row">'.$value['name'].'</th>
+            <td>Submitted by: '.$username.'</td>
             <td><a href="/DDWT21/week2/series/?series_id='.$value['id'].'" role="button" class="btn btn-primary">More info</a></td>
         </tr>
         ';
@@ -212,6 +223,7 @@ function get_series_info($pdo, $series_id){
  * @return string
  */
 function get_error($feedback){
+    $feedback = json_decode($feedback);
     $error_exp = '
         <div class="alert alert-'.$feedback['type'].'" role="alert">
             '.$feedback['message'].'
@@ -259,12 +271,13 @@ function add_series($pdo, $series_info){
     }
 
     /* Add Series */
-    $stmt = $pdo->prepare("INSERT INTO series (name, creator, seasons, abstract) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO series (name, creator, seasons, abstract, user) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([
         $series_info['Name'],
         $series_info['Creator'],
         $series_info['Seasons'],
-        $series_info['Abstract']
+        $series_info['Abstract'],
+        '1'
     ]);
     $inserted = $stmt->rowCount();
     if ($inserted ==  1) {
@@ -390,6 +403,15 @@ function count_series($pdo){
     $series = $stmt->rowCount();
     return $series;
 }
+/**
+ * Count the number of users
+ */ 
+function count_users($pdo){
+    $stmt = $pdo->prepare('SELECT * FROM users');
+    $stmt->execute();
+    $users = $stmt->rowCount();
+    return $users;
+}
 
 /**
  * Changes the HTTP Header to a given location
@@ -411,4 +433,11 @@ function get_user_id(){
     } else {
         return False;
     }
+}
+
+function get_user_name($pdo, $id){
+    $stmt = $pdo->prepare('SELECT firstname, lastname FROM users WHERE id = ?');
+    $stmt->execute([$id]);
+    $users = $stmt->fetch();
+    return $users;
 }

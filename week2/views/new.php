@@ -58,6 +58,7 @@
                                 <textarea class="form-control" id="inputAbstract" rows="3" name="Abstract" required><?php if (isset($series_info)){echo $series_info['abstract'];} ?></textarea>
                             </div>
                         </div>
+                        <input type="hidden" name="user" value="1">
                         <?php if(isset($series_id)){ ?><input type="hidden" name="series_id" value="<?php echo $series_id ?>"><?php } ?>
                         <div class="form-group row">
                             <div class="col-sm-10">

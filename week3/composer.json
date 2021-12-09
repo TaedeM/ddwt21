@@ -1,0 +1,15 @@
+{
+  "name": "taedem/ddwt21_week3",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "taede",
+      "email": "t.t.meijer@student.rug.nl"
+    }
+  ],
+  "require": {
+    "bramus/router": "1.5"
+  }
+}
